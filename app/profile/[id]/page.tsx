@@ -10,8 +10,24 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { StarIcon } from "lucide-react"
 import { useToast } from "@/components/ui/use-toast"
 
+interface Profile {
+  id: string
+  name: string
+  age: number
+  bio: string
+  images: string[]
+  interests: string[]
+  rating: number
+  reviews: Array<{
+    id: number
+    user: string
+    rating: number
+    comment: string
+  }>
+}
+
 export default function ProfilePage({ params }: { params: { id: string } }) {
-  const [profile, setProfile] = useState(null)
+  const [profile, setProfile] = useState<Profile | null>(null)
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(undefined)
   const [dateRecommendations, setDateRecommendations] = useState([])
   const { toast } = useToast()
@@ -83,106 +99,121 @@ export default function ProfilePage({ params }: { params: { id: string } }) {
   }, [profile, toast])
 
   if (!profile) {
-    return <div>Loading...</div>
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-purple-50 via-pink-50 to-indigo-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600 mx-auto mb-4"></div>
+          <p className="text-gray-600">Loading profile...</p>
+        </div>
+      </div>
+    )
   }
 
   return (
-    <div className="space-y-8">
-      <div className="relative h-96 overflow-hidden rounded-lg">
-        <Image src={profile.images[0] || "/placeholder.svg"} alt={profile.name} fill className="object-cover" />
-      </div>
-
-      <div className="space-y-4">
-        <div className="flex justify-between items-center">
-          <h1 className="text-3xl font-bold">
-            {profile.name}, {profile.age}
-          </h1>
-          <Badge variant="secondary">
-            ⭐ {profile.rating} ({profile.reviews.length} reviews)
-          </Badge>
+    <div className="min-h-screen bg-gradient-to-br from-purple-50 via-pink-50 to-indigo-50">
+      <div className="container mx-auto px-4 py-8 space-y-8">
+        <div className="relative h-96 overflow-hidden rounded-lg shadow-2xl">
+          <Image src={profile.images[0] || "/placeholder.svg"} alt={profile.name} fill className="object-cover" />
+          <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent"></div>
         </div>
 
-        <p className="text-lg">{profile.bio}</p>
-
-        <div className="flex flex-wrap gap-2">
-          {profile.interests.map((interest) => (
-            <Badge key={interest} variant="outline">
-              {interest}
+        <div className="space-y-6">
+          <div className="flex justify-between items-center">
+            <h1 className="text-4xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
+              {profile.name}, {profile.age}
+            </h1>
+            <Badge className="bg-gradient-to-r from-purple-500 to-pink-500 text-white px-4 py-2">
+              ⭐ {profile.rating} ({profile.reviews.length} reviews)
             </Badge>
-          ))}
+          </div>
+
+          <p className="text-lg text-gray-700 leading-relaxed">{profile.bio}</p>
+
+          <div className="flex flex-wrap gap-2">
+            {profile.interests.map((interest) => (
+              <Badge key={interest} className="bg-purple-100 text-purple-700 border-purple-200 hover:bg-purple-200">
+                {interest}
+              </Badge>
+            ))}
+          </div>
         </div>
-      </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Availability</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <Calendar
-            mode="single"
-            selected={selectedDate}
-            onSelect={setSelectedDate}
-            className="rounded-md border"
-            modifiers={{
-              available: [new Date(2023, 5, 15), new Date(2023, 5, 16), new Date(2023, 5, 18), new Date(2023, 5, 20)],
-            }}
-            modifiersStyles={{
-              available: { backgroundColor: "hsl(var(--accent))" },
-            }}
-          />
-        </CardContent>
-      </Card>
+        <Card className="bg-white/80 backdrop-blur-sm border-purple-200 shadow-lg">
+          <CardHeader className="bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-t-lg">
+            <CardTitle className="text-xl">Availability</CardTitle>
+          </CardHeader>
+          <CardContent className="p-6">
+            <Calendar
+              mode="single"
+              selected={selectedDate}
+              onSelect={setSelectedDate}
+              className="rounded-md border-purple-200"
+              modifiers={{
+                available: [new Date(2023, 5, 15), new Date(2023, 5, 16), new Date(2023, 5, 18), new Date(2023, 5, 20)],
+              }}
+              modifiersStyles={{
+                available: { backgroundColor: "rgb(147, 51, 234)", color: "white" },
+              }}
+            />
+          </CardContent>
+        </Card>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Date Recommendations</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          {dateRecommendations.map((recommendation, index) => (
-            <Card key={index}>
-              <CardContent className="p-4">
-                <h3 className="font-semibold">{recommendation.dateIdea}</h3>
-                <p className="text-sm text-muted-foreground">{recommendation.description}</p>
-                <p className="text-sm italic">{recommendation.whyGoodFit}</p>
-                <p className="text-sm font-semibold">Estimated Cost: {recommendation.estimatedCost}</p>
-              </CardContent>
-            </Card>
-          ))}
-        </CardContent>
-      </Card>
+        <Card className="bg-white/80 backdrop-blur-sm border-purple-200 shadow-lg">
+          <CardHeader className="bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-t-lg">
+            <CardTitle className="text-xl">Date Recommendations</CardTitle>
+          </CardHeader>
+          <CardContent className="p-6 space-y-4">
+            {dateRecommendations.map((recommendation, index) => (
+              <Card key={index} className="bg-white/90 border-purple-200 shadow-md hover:shadow-lg transition-shadow">
+                <CardContent className="p-4">
+                  <h3 className="font-semibold text-gray-800 text-lg">{recommendation.dateIdea}</h3>
+                  <p className="text-gray-600 mt-2">{recommendation.description}</p>
+                  <p className="text-purple-600 italic mt-2">{recommendation.whyGoodFit}</p>
+                  <p className="text-pink-600 font-semibold mt-2">Estimated Cost: {recommendation.estimatedCost}</p>
+                </CardContent>
+              </Card>
+            ))}
+          </CardContent>
+        </Card>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Reviews</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          {profile.reviews.map((review) => (
-            <div key={review.id} className="flex items-start space-x-4">
-              <Avatar>
-                <AvatarFallback>{review.user[0]}</AvatarFallback>
-              </Avatar>
-              <div className="flex-grow">
-                <div className="flex items-center">
-                  <h3 className="font-semibold">{review.user}</h3>
-                  <div className="ml-2 flex">
-                    {[...Array(5)].map((_, i) => (
-                      <StarIcon
-                        key={i}
-                        className={`w-4 h-4 ${i < review.rating ? "text-yellow-400" : "text-gray-300"}`}
-                      />
-                    ))}
+        <Card className="bg-white/80 backdrop-blur-sm border-purple-200 shadow-lg">
+          <CardHeader className="bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-t-lg">
+            <CardTitle className="text-xl">Reviews</CardTitle>
+          </CardHeader>
+          <CardContent className="p-6 space-y-4">
+            {profile.reviews.map((review) => (
+              <div key={review.id} className="flex items-start space-x-4 p-4 bg-white/50 rounded-lg">
+                <Avatar className="ring-2 ring-purple-200">
+                  <AvatarFallback className="bg-gradient-to-r from-purple-500 to-pink-500 text-white font-semibold">
+                    {review.user[0]}
+                  </AvatarFallback>
+                </Avatar>
+                <div className="flex-grow">
+                  <div className="flex items-center">
+                    <h3 className="font-semibold text-gray-800">{review.user}</h3>
+                    <div className="ml-2 flex">
+                      {[...Array(5)].map((_, i) => (
+                        <StarIcon
+                          key={i}
+                          className={`w-4 h-4 ${i < review.rating ? "text-yellow-400" : "text-gray-300"}`}
+                        />
+                      ))}
+                    </div>
                   </div>
+                  <p className="text-gray-600 mt-1">{review.comment}</p>
                 </div>
-                <p className="text-sm text-muted-foreground">{review.comment}</p>
               </div>
-            </div>
-          ))}
-        </CardContent>
-      </Card>
+            ))}
+          </CardContent>
+        </Card>
 
-      <Button className="w-full text-lg py-6" variant="primary">
-        Book a Date
-      </Button>
+        <Button 
+          className="w-full text-lg py-6 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white font-semibold shadow-lg hover:shadow-xl transition-all" 
+          variant="default"
+        >
+          Book a Date
+        </Button>
+      </div>
     </div>
   )
 }

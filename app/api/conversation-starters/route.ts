@@ -1,12 +1,27 @@
 import { NextResponse } from "next/server"
 import OpenAI from "openai"
 
-const openai = new OpenAI({
+// Only initialize OpenAI if API key is available
+const openai = process.env.OPENAI_API_KEY ? new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
-})
+}) : null
 
 export async function POST(req: Request) {
   const { userProfile, matchProfile } = await req.json()
+
+  // Check if OpenAI is available
+  if (!openai) {
+    return NextResponse.json({ 
+      error: "OpenAI API not configured",
+      conversationStarters: [
+        "What's your favorite way to spend a weekend?",
+        "Have you been to any interesting places recently?",
+        "What's something you're passionate about?",
+        "What's the best meal you've ever had?",
+        "What's a skill you'd love to learn?"
+      ]
+    }, { status: 503 })
+  }
 
   const prompt = `
     Given the following user profiles:

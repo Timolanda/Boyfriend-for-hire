@@ -1,26 +1,54 @@
 import { NextResponse } from "next/server"
 import OpenAI from "openai"
 
-const openai = new OpenAI({
+// Only initialize OpenAI if API key is available
+const openai = process.env.OPENAI_API_KEY ? new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
-})
+}) : null
 
 export async function POST(req: Request) {
-  const { userProfile, matchProfile, userPreferences } = await req.json()
+  const { userProfile, preferences, location } = await req.json()
+
+  // Check if OpenAI is available
+  if (!openai) {
+    return NextResponse.json({ 
+      error: "OpenAI API not configured",
+      recommendations: [
+        {
+          name: "Coffee & Conversation",
+          description: "A cozy coffee shop for a relaxed first meeting",
+          duration: "1-2 hours",
+          cost: "$10-20",
+          location: "Downtown area",
+          whyRecommended: "Perfect for getting to know each other in a comfortable setting"
+        },
+        {
+          name: "Art Gallery Walk",
+          description: "Explore local art galleries and museums",
+          duration: "2-3 hours",
+          cost: "$15-30",
+          location: "Arts district",
+          whyRecommended: "Great for cultural exploration and meaningful conversations"
+        }
+      ]
+    }, { status: 503 })
+  }
 
   const prompt = `
-    Given the following user profile, match profile, and user preferences:
+    Based on the user profile and preferences, suggest 5 date ideas:
     User Profile: ${JSON.stringify(userProfile)}
-    Match Profile: ${JSON.stringify(matchProfile)}
-    User Preferences: ${JSON.stringify(userPreferences)}
+    Preferences: ${JSON.stringify(preferences)}
+    Location: ${location}
 
-    Generate 3 personalized date recommendations with the following information for each:
-    - Date idea (1 sentence)
-    - Description (2-3 sentences)
-    - Why it's a good fit (1-2 sentences)
-    - Estimated cost ($ to $$$$$)
+    For each recommendation include:
+    - Name
+    - Description
+    - Duration
+    - Estimated cost
+    - Location
+    - Why it's recommended
 
-    Return the results as a JSON array.
+    Return as JSON array.
   `
 
   try {
@@ -33,8 +61,8 @@ export async function POST(req: Request) {
 
     return NextResponse.json({ recommendations })
   } catch (error) {
-    console.error("Error in date recommendations:", error)
-    return NextResponse.json({ error: "Failed to generate date recommendations" }, { status: 500 })
+    console.error("Error generating date recommendations:", error)
+    return NextResponse.json({ error: "Failed to generate recommendations" }, { status: 500 })
   }
 }
 

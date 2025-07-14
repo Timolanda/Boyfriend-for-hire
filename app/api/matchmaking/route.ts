@@ -1,12 +1,38 @@
 import { NextResponse } from "next/server"
 import OpenAI from "openai"
 
-const openai = new OpenAI({
+// Only initialize OpenAI if API key is available
+const openai = process.env.OPENAI_API_KEY ? new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
-})
+}) : null
 
 export async function POST(req: Request) {
   const { userPreferences, userProfile } = await req.json()
+
+  // Check if OpenAI is available
+  if (!openai) {
+    return NextResponse.json({ 
+      error: "OpenAI API not configured",
+      matches: [
+        {
+          name: "Alex",
+          age: 28,
+          bio: "Adventure seeker who loves hiking and photography. Always up for trying new restaurants and exploring hidden gems in the city.",
+          interests: ["Hiking", "Photography", "Food", "Travel", "Music"],
+          compatibilityScore: 85,
+          reasonForMatch: "Shared love for outdoor activities and culinary adventures"
+        },
+        {
+          name: "Jordan",
+          age: 26,
+          bio: "Creative soul with a passion for art and music. Enjoys quiet evenings with good books and meaningful conversations.",
+          interests: ["Art", "Music", "Reading", "Coffee", "Philosophy"],
+          compatibilityScore: 78,
+          reasonForMatch: "Complementary interests in creative pursuits and intellectual discussions"
+        }
+      ]
+    }, { status: 503 })
+  }
 
   const prompt = `
     Given the following user preferences and profile:

@@ -1,32 +1,41 @@
 import { NextResponse } from "next/server"
 import OpenAI from "openai"
 
-const openai = new OpenAI({
+// Only initialize OpenAI if API key is available
+const openai = process.env.OPENAI_API_KEY ? new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
-})
+}) : null
 
 export async function POST(req: Request) {
-  const { dateId, feedback, rating } = await req.json()
+  const { dateExperience, userFeedback } = await req.json()
+
+  // Check if OpenAI is available
+  if (!openai) {
+    return NextResponse.json({ 
+      error: "OpenAI API not configured",
+      feedback: {
+        analysis: "Based on your feedback, it sounds like you had a mixed experience. Consider discussing your expectations and preferences with your match for better future dates.",
+        suggestions: [
+          "Try a different type of date activity",
+          "Communicate your preferences more clearly",
+          "Consider a shorter first meeting"
+        ],
+        rating: 3
+      }
+    }, { status: 503 })
+  }
 
   const prompt = `
-    Analyze the following date feedback:
-    Date ID: ${dateId}
-    Rating: ${rating}/10
-    Feedback: ${feedback}
+    Analyze this date feedback and provide insights:
+    Date Experience: ${JSON.stringify(dateExperience)}
+    User Feedback: ${JSON.stringify(userFeedback)}
 
-    Provide a brief analysis of the date experience, including:
-    1. Overall sentiment
-    2. Key positive aspects
-    3. Areas for improvement
-    4. Suggestions for future dates
+    Provide:
+    1. Analysis of the experience (2-3 sentences)
+    2. Suggestions for improvement (3-4 points)
+    3. Overall rating (1-5)
 
-    Return the analysis as a JSON object with the following structure:
-    {
-      "sentiment": "positive/neutral/negative",
-      "positiveAspects": ["aspect1", "aspect2", ...],
-      "areasForImprovement": ["area1", "area2", ...],
-      "suggestions": ["suggestion1", "suggestion2", ...]
-    }
+    Return as JSON with analysis, suggestions array, and rating.
   `
 
   try {
@@ -35,14 +44,12 @@ export async function POST(req: Request) {
       messages: [{ role: "user", content: prompt }],
     })
 
-    const analysis = JSON.parse(completion.choices[0].message.content || "{}")
+    const feedback = JSON.parse(completion.choices[0].message.content || "{}")
 
-    // In a real app, you would save this analysis to a database
-
-    return NextResponse.json({ analysis })
+    return NextResponse.json({ feedback })
   } catch (error) {
     console.error("Error analyzing date feedback:", error)
-    return NextResponse.json({ error: "Failed to analyze date feedback" }, { status: 500 })
+    return NextResponse.json({ error: "Failed to analyze feedback" }, { status: 500 })
   }
 }
 
