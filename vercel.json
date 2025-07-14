@@ -5,7 +5,7 @@
   "framework": "nextjs",
   "functions": {
     "app/api/**/*.ts": {
-      "runtime": "nodejs18.x"
+      "runtime": "vercel-nodejs@4.0.0"
     }
   },
   "rewrites": [
